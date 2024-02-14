@@ -1,2 +1,5 @@
-package net.lumilink.server.plugins.devices;public class DeviceHandler {
+package net.lumilink.server.plugins.devices;
+
+public class DeviceHandler {
+
 }

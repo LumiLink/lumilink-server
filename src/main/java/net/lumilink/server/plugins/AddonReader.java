@@ -5,9 +5,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class PluginReader {
+public class AddonReader {
 
-    public void readPlugins(Path folderPath){
+    public void readAddons(Path folderPath){
         boolean exists = Files.exists(folderPath);
 
         if(!exists){
@@ -20,9 +20,11 @@ public class PluginReader {
                 System.out.println("Addons folder successfully created!");
             }
         }
+
+        //TODO: Logic after reading addons
     }
 
-    public void readPlugins(){
-        readPlugins(Paths.get("").resolve("addons"));
+    public void readAddons(){
+        readAddons(Paths.get("").resolve("addons"));
     }
 }

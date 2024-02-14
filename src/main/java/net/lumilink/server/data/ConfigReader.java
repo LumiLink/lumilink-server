@@ -1,4 +1,4 @@
-package net.lumilink.server.files;
+package net.lumilink.server.data;
 
 public class ConfigReader {
 }
