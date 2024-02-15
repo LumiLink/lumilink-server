@@ -53,7 +53,7 @@ public class PluginReader {
         }
 
         try(InputStream inputStream = jar.getInputStream(configEntry)){
-            Main.getServer().getPluginHandler().addPlugin(Plugin.fromConfigInputStream(f, inputStream));
+            Main.getServer().getPluginHandler().addPlugin(JavaPlugin.fromConfigInputStream(f, inputStream));
 
         } catch (IOException e) {
             e.printStackTrace();

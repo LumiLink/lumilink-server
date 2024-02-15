@@ -1,6 +1,7 @@
 package net.lumilink.server.plugins;
 
 import lombok.Getter;
+import net.lumilink.api.Plugin;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -8,7 +9,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.*;
 
-public class Plugin {
+public class JavaPlugin extends net.lumilink.api.Plugin {
     @Getter private final File jarFile;
     @Getter private final String name;
     private String version;
@@ -16,7 +17,9 @@ public class Plugin {
     @Getter private String mainClass;
     @Getter private List<String> dependencies;
 
-    public Plugin(File jarFile, String name, String version, String authors, String mainClass, String dependencies) {
+    private Plugin pluginObject;
+
+    public JavaPlugin(File jarFile, String name, String version, String authors, String mainClass, String dependencies) {
         this.jarFile = jarFile;
         this.name = name;
         this.version = version;
@@ -27,7 +30,7 @@ public class Plugin {
                 .split(", ")).map(String::trim).toList();
     }
 
-    public static Plugin fromConfigInputStream(File f, InputStream inputStream){
+    public static JavaPlugin fromConfigInputStream(File f, InputStream inputStream){
         Map<String, String> configMap = new HashMap<>();
 
         try(BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))){
@@ -46,6 +49,6 @@ public class Plugin {
             return null;
         }
 
-        return new Plugin(f, configMap.get("name"), configMap.get("version"), configMap.get("author"), configMap.get("main-class"), configMap.get("dependencies"));
+        return new JavaPlugin(f, configMap.get("name"), configMap.get("version"), configMap.get("author"), configMap.get("main-class"), configMap.get("dependencies"));
     }
 }

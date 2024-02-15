@@ -1,17 +1,30 @@
 package net.lumilink.server.plugins;
 
+import net.lumilink.api.Plugin;
+import net.lumilink.api.devices.DeviceType;
+
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
 
 public class PluginHandler {
-    private final List<Plugin> plugins = new LinkedList<>();
-    private final List<Plugin> loadedPlugins = new ArrayList<>();
-    private Map<String, Plugin> pluginMap = new HashMap<>();
+    private final List<JavaPlugin> plugins = new LinkedList<>();
+    private final List<JavaPlugin> loadedPlugins = new ArrayList<>();
+    private Map<String, JavaPlugin> pluginMap = new HashMap<>();
 
-    public void addPlugin(Plugin pl){
+    private Map<String, Plugin.Method> pluginMethods = new HashMap<>();
+
+    public void addPluginMethod(String methodName, Plugin.Method method) {
+        pluginMethods.put(methodName, method);
+    }
+
+
+    public void addPlugin(JavaPlugin pl){
         plugins.add(pl);
     }
 
@@ -21,7 +34,7 @@ public class PluginHandler {
     public void loadPlugins(){
 
         //Map all the plugin names to the right plugin
-        for (Plugin plugin : plugins) {
+        for (JavaPlugin plugin : plugins) {
             pluginMap.put(plugin.getName(), plugin);
         }
 
@@ -30,23 +43,23 @@ public class PluginHandler {
         // Treat loading plugins as the topological sorting of a DAG using Kahn's algorithm
 
         // We initialize a map indegree to keep track of the in-degree of each plugin.
-        Map<Plugin, Integer> indegree = new HashMap<>();
-        for (Plugin plugin : plugins) {
+        Map<JavaPlugin, Integer> indegree = new HashMap<>();
+        for (JavaPlugin plugin : plugins) {
             indegree.put(plugin, 0);
         }
 
         // Then we iterate through the plugins to calculate the in-degree of each plugin.
-        for (Plugin plugin : plugins) {
+        for (JavaPlugin plugin : plugins) {
             for (String dependency : plugin.getDependencies()) {
-                Plugin dependentPlugin = pluginMap.get(dependency);
+                JavaPlugin dependentPlugin = pluginMap.get(dependency);
                 indegree.put(dependentPlugin, indegree.get(dependentPlugin) + 1);
             }
         }
 
         // We use a queue to maintain the set of plugins with an in-degree of 0, indicating they have no
         // dependencies and can be loaded.
-        Queue<Plugin> queue = new LinkedList<>();
-        for (Plugin plugin : plugins) {
+        Queue<JavaPlugin> queue = new LinkedList<>();
+        for (JavaPlugin plugin : plugins) {
             if (indegree.get(plugin) == 0) {
                 queue.add(plugin);
             }
@@ -56,7 +69,7 @@ public class PluginHandler {
         // the queue if their in-degree becomes 0. We repeat this process until the queue is empty, ensuring all
         // plugins are processed in the correct order.
         while (!queue.isEmpty()) {
-            Plugin plugin = queue.poll();
+            JavaPlugin plugin = queue.poll();
 
             //Plugin failed with loading, skip the rest so plugins that depend on it won't get loaded
             if(!load(plugin)){
@@ -64,7 +77,7 @@ public class PluginHandler {
             }
 
             for (String dependency : plugin.getDependencies()) {
-                Plugin dependentPlugin = pluginMap.get(dependency);
+                JavaPlugin dependentPlugin = pluginMap.get(dependency);
                 indegree.put(dependentPlugin, indegree.get(dependentPlugin) - 1);
                 if (indegree.get(dependentPlugin) == 0) {
                     queue.add(dependentPlugin);
@@ -73,7 +86,7 @@ public class PluginHandler {
         }
     }
 
-    private boolean load(Plugin p){
+    private boolean load(JavaPlugin p){
         if(p.getName() == null || p.getMainClass() == null){
             //Plugin couldn't load
             //TODO: Error message
@@ -84,9 +97,26 @@ public class PluginHandler {
             String className = p.getMainClass();
 
             Class<?> mainClass = classLoader.loadClass(className);
-            Object instance = mainClass.getDeclaredConstructor().newInstance();
+            Plugin pluginInstance = (Plugin) mainClass.getDeclaredConstructor().newInstance();
 
-            mainClass.getMethod("onStart").invoke(instance);
+            try {
+                Field f = mainClass.getSuperclass().getDeclaredField("methodExecutions");
+                f.setAccessible(true);
+
+                HashMap<String, Plugin.Method> methodExecutions = (HashMap<String, Plugin.Method>) f.get(pluginInstance);
+
+                for (String name : pluginMethods.keySet()) {
+                    methodExecutions.put(name, pluginMethods.get(name));
+                }
+
+            } catch (SecurityException | NoSuchFieldException e) {
+                throw new RuntimeException(e);
+            }
+
+
+            pluginInstance.onStart();
+
+
 
         } catch (ClassNotFoundException e) {
             System.out.println("ERROR");
@@ -101,20 +131,20 @@ public class PluginHandler {
         return true;
     }
 
-    public boolean isLoaded(Plugin p){
+    public boolean isLoaded(JavaPlugin p){
         return loadedPlugins.contains(p);
     }
 
     public boolean isLoaded(String name){
-        for(Plugin p : loadedPlugins){
+        for(JavaPlugin p : loadedPlugins){
             if(p.getName().equals(name)) return true;
         }
 
         return false;
     }
 
-    public Plugin getPluginByName(String name){
-        for(Plugin p : plugins){
+    public JavaPlugin getPluginByName(String name){
+        for(JavaPlugin p : plugins){
             if(p.getName().equals(name)) return p;
         }
 
