@@ -1,6 +1,5 @@
 package net.lumilink.server.logs;
 
-import jdk.jpackage.internal.Log;
 import lombok.Getter;
 import org.apache.log4j.*;
 import org.apache.log4j.spi.LoggingEvent;

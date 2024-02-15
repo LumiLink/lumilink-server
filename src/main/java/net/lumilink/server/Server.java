@@ -1,19 +1,24 @@
 package net.lumilink.server;
 
-import net.lumilink.server.plugins.AddonReader;
+import lombok.Getter;
+import net.lumilink.server.plugins.PluginHandler;
+import net.lumilink.server.plugins.PluginReader;
 import net.lumilink.server.logs.LogUtil;
 
 public class Server {
-    private final AddonReader reader;
+    private final PluginReader reader;
+    @Getter private final PluginHandler pluginHandler;
 
     public Server() {
-        this.reader = new AddonReader();
+        this.reader = new PluginReader();
+        this.pluginHandler = new PluginHandler();
     }
 
     public void start(){
         LogUtil.getLogger().log("Starting server...");
-        reader.readAddons();
+        reader.readPlugins();
 
+        pluginHandler.loadPlugins();
         LogUtil.getLogger().log("Server started successfully!");
     }
 }
