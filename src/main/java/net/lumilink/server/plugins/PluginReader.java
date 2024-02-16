@@ -14,15 +14,16 @@ import java.util.zip.ZipEntry;
 
 public class PluginReader {
 
+
     public void readPlugins(Path folderPath){
         if(!Files.exists(folderPath)){
-            System.out.println("No addons folder found, creating one...");
+            System.out.println("No plugin folder found, creating one...");
             try {
                 Files.createDirectory(folderPath);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             } finally {
-                System.out.println("Addons folder successfully created!");
+                System.out.println("Plugin folder successfully created!");
             }
         }
 

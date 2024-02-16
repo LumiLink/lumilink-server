@@ -48,7 +48,7 @@ public class PluginHandler {
             indegree.put(plugin, 0);
         }
 
-        // Then we iterate through the plugins to calculate the in-degree of each plugin.
+        // Then we iterate through the plugins to calculate the in-degree  of each plugin.
         for (JavaPlugin plugin : plugins) {
             for (String dependency : plugin.getDependencies()) {
                 JavaPlugin dependentPlugin = pluginMap.get(dependency);
@@ -93,12 +93,16 @@ public class PluginHandler {
             return false;
         }
 
+        //Get the Main.class file from the plugin.
         try(URLClassLoader classLoader = new URLClassLoader(new URL[]{p.getJarFile().toURI().toURL()})){
             String className = p.getMainClass();
 
+            //Load the class ad create an instance of the Plugin the Main class extends
             Class<?> mainClass = classLoader.loadClass(className);
             Plugin pluginInstance = (Plugin) mainClass.getDeclaredConstructor().newInstance();
 
+            //We need to be able to interact with methods from the plugin.
+            //In the plugin we store the methods that will be used for device type registration etc in a map.
             try {
                 Field f = mainClass.getSuperclass().getDeclaredField("methodExecutions");
                 f.setAccessible(true);
@@ -113,10 +117,8 @@ public class PluginHandler {
                 throw new RuntimeException(e);
             }
 
-
+            //Invoke the onStart method in the plugin
             pluginInstance.onStart();
-
-
 
         } catch (ClassNotFoundException e) {
             System.out.println("ERROR");
